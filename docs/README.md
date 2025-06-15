@@ -215,6 +215,38 @@ Refer to the provided Jupyter notebooks for complete examples and results:
 ![Example Output](imgs/example.png)
 
 
+## 💻 Web UI Demo
+
+To make anomaly generation more interactive, we provide a Gradio-based web interface.
+
+**Installation:**
+```bash
+pip install gradio
+pip install huggingface_hub==0.24.5
+```
+
+**How to Launch:**
+```bash
+python web_demo.py
+```
+
+This will start a local web server. Open the provided URL in your browser to access the UI.
+
+**Features:**
+- **Interactive Prompting:** Dynamically create and preview prompts using templates.
+- **Real-time Generation:** Upload a reference image and generate anomaly variations on the fly.
+- **Flexible Masking:** Use your own mask or let the UI generate a random one for you.
+- **Advanced Controls:** Easily tweak parameters like guidance strength, attention scaling, and random seeds.
+- **Instant Visualization:** View the final image, attention maps, and generation metadata all in one place.
+
+*We recommend preparing an image like `imgs/web_ui_demo.png` to showcase your UI.*
+
+<details>
+<summary>Web UI Demo screenshot</summary>
+
+![Web UI Demo](imgs/web_ui_demo.png)
+</details>
+
 ## 🛠️ Todo List
 - [ ] Colab demo.
 - [ ] HuggingFace demo.
