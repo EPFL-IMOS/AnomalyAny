@@ -4,7 +4,7 @@
 
 ## 🌟 News  
 
-🚀 **Code updated with memory optimization!** Now you can run the code on a **24GB GPU** without issues.
+🚀 **Code updated with memory optimization!** Now you can run the code on under **30GB GPU memory** without issues.
 
 <br>
 </div>
