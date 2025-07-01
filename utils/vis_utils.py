@@ -23,15 +23,20 @@ def show_cross_attention(prompt: str,
     attention_maps = aggregate_attention(attention_store, res, from_where, True, select).detach().cpu()
     images = []
 
-    # show spatial attention for indices of tokens to strengthen
+    # show spatial attention for all tokens
     for i in range(len(tokens)):
+        if i == 0 or i == len(tokens) - 1: # Skip start and end tokens
+            continue
         image = attention_maps[:, :, i]
+        image = show_image_relevance(image, orig_image)
+        image = image.astype(np.uint8)
+        image = np.array(Image.fromarray(image).resize((res ** 2, res ** 2)))
+        token_text = decoder(int(tokens[i]))
+        # Add a visual indicator for altered tokens
         if i in indices_to_alter:
-            image = show_image_relevance(image, orig_image)
-            image = image.astype(np.uint8)
-            image = np.array(Image.fromarray(image).resize((res ** 2, res ** 2)))
-            image = ptp_utils.text_under_image(image, decoder(int(tokens[i])))
-            images.append(image)
+            token_text = f"*{token_text}*"
+        image = ptp_utils.text_under_image(image, token_text)
+        images.append(image)
 
     ptp_utils.view_images(np.stack(images, axis=0))
     # TODO

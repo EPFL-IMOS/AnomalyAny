@@ -1,6 +1,5 @@
 import pprint
-from typing import List
-
+from typing import List, Optional, Dict, Tuple, Callable
 import pyrallis
 import torch
 from PIL import Image
@@ -39,18 +38,33 @@ def get_indices_to_alter(stable, prompt: str) -> List[int]:
     return token_indices
 
 
-def get_indices_to_alter_new(stable, prompt: str, tokens) -> List[int]:
-    token_idx_to_word = {idx: stable.tokenizer.decode(t)
-                         for idx, t in enumerate(stable.tokenizer(prompt)['input_ids'])
-                         if 0 < idx < len(stable.tokenizer(prompt)['input_ids']) - 1}
+def get_indices_to_alter_new(stable, prompt: str, tokens_str: str) -> Tuple[List[int], Dict[int, str]]:
+    """
+    Parses the prompt to get a map of token indices to words,
+    and identifies the indices to alter based on user input.
+    Returns the list of indices to alter and the full token map.
+    """
+    token_ids = stable.tokenizer(prompt)['input_ids']
+    token_idx_to_word = {
+        idx: stable.tokenizer.decode(t)
+        for idx, t in enumerate(token_ids)
+        if 0 < idx < len(token_ids) - 1
+    }
     pprint.pprint(token_idx_to_word)
-    # token_indices = input("Please enter the a comma-separated list indices of the tokens you wish to "
-    #                       "alter (e.g., 2,5): ")
-    # pprint.pprint(token_indices)
-    token_indices = tokens
-    token_indices = [int(i) for i in token_indices.split(",")]
-    print(f"Altering tokens: {[token_idx_to_word[i] for i in token_indices]}")
-    return token_indices
+
+    # The web UI passes a number, which we convert to a string.
+    if isinstance(tokens_str, (int, float)):
+        tokens_str = str(int(tokens_str))
+
+    try:
+        # Handle comma-separated strings for indices
+        token_indices = [int(i.strip()) for i in tokens_str.split(",") if i.strip()]
+    except (ValueError, AttributeError) as e:
+        print(f"Warning: Could not parse token indices '{tokens_str}'. Error: {e}. Defaulting to empty list.")
+        token_indices = []
+
+    print(f"Altering tokens: {[token_idx_to_word.get(i, '<UNK>') for i in token_indices]}")
+    return token_indices, token_idx_to_word
 
 
 def run_on_prompt(prompt: List[str],
@@ -150,13 +164,13 @@ def run_on_prompt_and_masked_image(prompt: List[str],
                                    mask_image: str,
                                    seed: torch.Generator,
                                    config: RunConfig,
-                                   
                                    normal_prompt,
                                    detailed_prompt,
-
-                                   img_prompt = None,
-                                   abnormal_img = None,
-                                   clip_loss = None) -> Image.Image:
+                                   img_prompt=None,
+                                   abnormal_img=None,
+                                   clip_loss=None,
+                                   callback: Optional[Callable] = None,
+                                   callback_steps: Optional[int] = 1) -> Image.Image:
     if controller is not None:
         ptp_utils.register_attention_control(model, controller)
     outputs, image_latents = model(prompt=prompt,
@@ -182,7 +196,9 @@ def run_on_prompt_and_masked_image(prompt: List[str],
                                    normal_prompt=normal_prompt,
                                    abnormal_img=abnormal_img,
                                    detailed_prompt=detailed_prompt,
-                                   clip_loss=clip_loss)
+                                   clip_loss=clip_loss,
+                                   callback=callback,
+                                   callback_steps=callback_steps)
     # image = outputs.images[0]
     # return image, image_latents
     return outputs[0], image_latents
